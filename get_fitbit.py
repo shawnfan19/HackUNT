@@ -96,14 +96,24 @@ def getPrediction():
 
     print(data)
 
+    columns = list(df.columns)
+
+    columns.remove('cardio')
+    columns.remove('age')
+
+    print(columns)
+
     #Convert data to pandas dataframe
-    data_df = pd.DataFrame(data, columns = list(df.columns))
+    data_df = pd.DataFrame([data], columns = columns)
 
     print(data_df)
 
     pred = best_model.predict(data_df)
 
-    return jsonify(pred)
+    print(pred[0])
+    print(type(pred[0]))
+
+    return jsonify(int(pred[0]))
 
 @app.route('/get_fitbit_data')
 def getData():

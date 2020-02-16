@@ -45,8 +45,8 @@
           <v-card-text>
             <p>Age: {{age}}</p>
             <p>Gender: {{gender}}</p>
-            <p>Height: {{height}}</p>
-            <p>Weight: {{weight}}</p>
+            <p>Height: {{height}} feet</p>
+            <p>Weight: {{weight}} lbs</p>
             <p>BMI: {{bmi}}</p>
           </v-card-text>
         </v-col>
@@ -70,6 +70,25 @@
         <v-btn class="ma-5" v-on:click="getFitbit">Sync with My Fitbit Account</v-btn>
       </v-card-actions>
     </v-card>
+
+    <v-dialog v-model="loading" persistent width="800">
+      <v-card color="primary" dark>
+        <v-card-title>
+          {{ loading_message }}
+          <v-progress-linear indeterminate color="white"></v-progress-linear>
+        </v-card-title>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="dialog" persistent max-width="1000">
+      <v-card>
+        <v-card-title>Congratulations! Your updated cardiovascular risk score is 0.75.</v-card-title>
+        <v-card-title> You qualify for a discount of ${{discount}}/month.</v-card-title>
+        <v-card-actions>
+          <v-btn color="green darken-1" text v-on:click="toggleDialog">Got it!</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -81,7 +100,7 @@ export default {
     return {
       age: 21,
       gender: "Male",
-      height: 5,
+      height: 6,
       weight: 165,
       bmi: 27.14,
       minutesActive: 105,
@@ -101,7 +120,13 @@ export default {
         0.0,
         1.0,
         32.111952
-      ]
+      ],
+      individual_data: [],
+      loading: false,
+      loading_message: "Computing your cardiovascular risk score...",
+      dialog: false,
+      score: "0.75",
+      discount:25,
     };
   },
   methods: {
@@ -109,10 +134,12 @@ export default {
       axios
         .get("http://localhost:5000/get_fitbit_data")
         .then(res => {
-          this.minutesActive = res.minutesActive;
-          this.bmi = res.bmi;
-          this.weight = res.weight;
-          this.weight = res.height;
+          this.individual_data = res;
+          //Uncomment to display indiviudal data
+          //   this.minutesActive = res.minutesActive;
+          //   this.bmi = res.bmi;
+          //   this.weight = res.weight;
+          //   this.weight = res.height;
         })
         .catch(error => {
           console.log(error);
@@ -124,16 +151,26 @@ export default {
         .post("http://localhost:5000/get_predictions", payload)
         .then(res => {
           this.score = res.score;
+
+          setTimeout(this.toggleLoading, 8000);
         })
         .catch(error => {
           console.log(error);
         });
     },
+    toggleLoading: function() {
+      this.loading = !this.loading;
+      this.toggleDialog()
+    },
+    toggleDialog: function() {
+      this.dialog = !this.dialog;
+    },
     onSubmit: function() {
       console.log("hi");
+      this.loading = true;
       let payload = {
-          test_data: this.test_data
-      }
+        test_data: this.test_data
+      };
       this.getPredictions(payload);
     }
   },
